@@ -69,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
-    name: "v${{ matrix.build_env.tag }} - ${{ matrix.build_env.pkgarch}} :: ${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}} build"
+    name: "v25.12.2 - aarch64 :: rockchip/armv8 build"
     runs-on: ubuntu-latest
     needs: generate-config
     strategy:
@@ -90,7 +90,7 @@ jobs:
         id: cache-sdk
         uses: actions/cache@v4
         env:
-          cache-name: "cache-sdk-${{ matrix.build_env.tag }}-${{ matrix.build_env.target}}-${{ matrix.build_env.subtarget}}"
+          cache-name: "cache-sdk-25.12.2-rockchip-armv8"
         with:
           path: openwrt-sdk-*/
           key: ${{ runner.os }}-sdk-${{ env.cache-name }}
@@ -98,17 +98,17 @@ jobs:
       - name: Download and extract OpenWrt SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
-          echo "pkgarch: ${{ matrix.build_env.pkgarch}}, target:${{ matrix.build_env.target}}, subtarget: ${{ matrix.build_env.subtarget}}"
+          echo "pkgarch: aarch64, target:rockchip, subtarget: armv8"
 
           # Get the actual SDK filename from the directory listing
-          SDK_FILE=$(curl -s "https://downloads.openwrt.org/releases/${{ matrix.build_env.tag }}/targets/${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}}/" | grep -o "openwrt-sdk-${{ matrix.build_env.tag }}-${{ matrix.build_env.target}}-${{ matrix.build_env.subtarget}}_gcc-[^\"]*_musl[^\"]*\.Linux-x86_64\.tar\.[xz|zst]*" | head -n1)
+          SDK_FILE=$(curl -s "https://downloads.openwrt.org/releases/25.12.2/targets/rockchip/armv8/" | grep -o "openwrt-sdk-25.12.2-rockchip-armv8_gcc-[^\"]*_musl[^\"]*\.Linux-x86_64\.tar\.[xz|zst]*" | head -n1)
           
           if [ -z "$SDK_FILE" ]; then
-            echo "SDK file not found for ${{ matrix.build_env.tag }} ${{ matrix.build_env.target}} ${{ matrix.build_env.subtarget}}"
+            echo "SDK file not found for 25.12.2 rockchip armv8"
             exit 1
           fi
           
-          SDK_DOWNLOAD_URL="https://downloads.openwrt.org/releases/${{ matrix.build_env.tag }}/targets/${{ matrix.build_env.target}}/${{ matrix.build_env.subtarget}}/${SDK_FILE}"
+          SDK_DOWNLOAD_URL="https://downloads.openwrt.org/releases/25.12.2/targets/rockchip/armv8/${SDK_FILE}"
           echo "Downloading SDK: $SDK_DOWNLOAD_URL"
           
           wget "$SDK_DOWNLOAD_URL"
@@ -189,7 +189,7 @@ jobs:
           SDK_DIR=$(find . -maxdepth 1 -name "openwrt-sdk-*" -type d | head -n1)
           
           mkdir -p awgrelease
-          postfix="v${{ matrix.build_env.tag }}_${{ matrix.build_env.pkgarch}}_${{ matrix.build_env.target}}_${{ matrix.build_env.subtarget}}"
+          postfix="v25.12.2_aarch64_rockchip_armv8"
           
           # Copy built packages
           find "$SDK_DIR/bin/packages" -name "amneziawg-tools*.?pk" -exec sh -c 'file="$1"; postfix="$2"; ext="${file##*.}"; cp "$file" "awgrelease/amneziawg-tools_${postfix}.${ext}"' _ {} "${postfix}" \; || echo "amneziawg-tools package not found"
@@ -204,4 +204,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: awgrelease/*.?pk
-          tag_name: v${{ matrix.build_env.tag }}
+          tag_name: v25.12.2
